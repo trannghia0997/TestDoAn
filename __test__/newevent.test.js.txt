@@ -1,0 +1,99 @@
+const puppeteer = require('puppeteer');
+let browser;
+let page;
+let url = "https://school.moodledemo.net/calendar/view.php?view=month";
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve("done")
+    }, ms)
+  })
+}
+
+async function login(){
+  page.goto("https://school.moodledemo.net/login/index.php");
+  const username = "#username";
+  const password = "#password";
+  const btn = "#loginbtn";
+  await page.waitForSelector(username);
+  await page.type(username, "manager");
+  await page.type(password, "moodle");
+  await page.click(btn);
+  await page.waitForTimeout(1000);
+}
+
+beforeAll(async () => {
+  browser = await puppeteer.launch({ headless: false });
+  page = await browser.newPage();
+  await login();
+  await page.goto(url, {timeout: 100000 });
+}, 100000);
+
+afterAll(async () => {
+  await browser.close();
+});
+
+describe('Create New Event Automation Test', () => {
+  const newevent = '[data-action="new-event-button"]';
+  const name = '#id_name';
+  const day = '#id_timestart_day';
+  const month = '#id_timestart_month';
+  const year = '#id_timestart_year';
+  const hour = '#id_timestart_hour';
+  const minute = '#id_timestart_minute';
+  const eventtype = '#id_eventtype';
+  const save = '[data-action="save"]';
+  const id_error_name = '#id_error_name';
+
+  test('Normal flow', async () => {
+    await page.click(newevent);
+    await page.waitForSelector('#id_name');
+    await page.type(name, "a");
+    await page.select(day, "12");  
+    await page.select(month, "1"); 
+    await page.select(year, "2023");
+    await page.select(hour, "10");
+    await page.select(minute, "30");
+    await page.select(eventtype, "Exam");
+    await page.click(save);
+
+    await delay(1000);
+  }, 100000);
+
+  test('Non type event name', async () => {
+    await page.click(newevent);
+    await page.waitForSelector('#id_name');
+    await page.type(name, "");
+    await page.select(day, "13");  
+    await page.select(month, "1"); 
+    await page.select(year, "2023");
+    await page.select(hour, "10");
+    await page.select(minute, "30");
+    await page.select(eventtype, "Exam");
+    await page.click(save);
+    const error = await page.waitForSelector(id_error_name);
+    expect(error).toBe(error);
+
+    await delay(1000);
+  }, 100000);
+
+  test('Select Course and non select Course', async () => {
+    await page.click(newevent);
+    await page.waitForSelector('#id_name');
+    await page.type(name, "a");
+    await page.select(day, "14");  
+    await page.select(month, "1"); 
+    await page.select(year, "2023");
+    await page.select(hour, "10");
+    await page.select(minute, "30");
+    await page.select(eventtype, "Course");
+    await page.click(save);
+    const error = await page.waitForSelector(id_error_name);
+    expect(error).toBe(error);
+
+    await delay(1000);
+  }, 100000);
+
+  // Add more test cases as needed
+});
